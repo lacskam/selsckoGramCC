@@ -8,9 +8,9 @@ void session::start(message_handler&& on_message, error_handler&& on_error) {
     async_read();
 }
 
-void session::post(std::string_view message) {
+void session::post(uint8_t type,uint32_t source,uint32_t dest,std::string_view message) {
     bool idle = outgoing.empty();
-    auto packet = make_packet(1,remote_client.port(),1,message);
+    auto packet = make_packet(type,source,dest,message);
 
     outgoing.push_back(packet);
 
@@ -76,9 +76,9 @@ void session::on_payload_read(error_code ec) {
 
 
     std::string message(read_payload.begin(), read_payload.end());
-    boost::asio::ip::address_v4 client_ip(ntohl(read_header.navi_ids.source_id));
-    std::cout<<client_ip.to_string()<<message<<std::endl;
-    on_message(message);
+
+    std::cout<<read_header.navi_ids.source_id<<" " +message<<std::endl;
+    on_message(read_header.type,remote_client.port(),read_header.navi_ids.dest_id,message);
 
     session::async_read();
 }

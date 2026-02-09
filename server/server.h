@@ -13,7 +13,7 @@ public:
 
     void async_accept();
 
-    void post(const std::string& message);
+    void post(uint8_t type,uint32_t source,uint32_t dest,const std::string& message);
 
 private:
     boost::asio::io_context& io_context;

@@ -9,7 +9,7 @@ using tcp = boost::asio::ip::tcp;
 using error_code = boost::system::error_code;
 
 
-using message_handler = std::function<void(std::string)>;
+using message_handler = std::function<void(uint8_t,uint32_t,uint32_t,std::string)>;
 using error_handler = std::function<void()>;
 
 
@@ -20,7 +20,7 @@ public:
 
     void start(message_handler&& on_message, error_handler&& on_error);
 
-    void post(std::string_view message);
+    void post(uint8_t type,uint32_t source,uint32_t dest,std::string_view message);
 
 private:
     void async_read();
