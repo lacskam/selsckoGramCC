@@ -37,6 +37,7 @@ enum : uint8_t
 {
     servmessage = 0x01,
     usmessage = 0x02,
+    brcast = 0x03,
 
 
 };
