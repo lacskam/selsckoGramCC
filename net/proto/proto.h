@@ -5,6 +5,9 @@
 #include <vector>
 #include <cstring>
 #include<memory>
+
+
+
 typedef struct {
 
     uint32_t source_id;
@@ -30,7 +33,13 @@ typedef struct
     std::vector<uint8_t> payload;
 } packet;
 
+enum : uint8_t
+{
+    servmessage = 0x01,
+    usmessage = 0x02,
 
+
+};
 std::shared_ptr<std::vector<uint8_t>> make_packet(uint8_t type,
                                  uint32_t source,
                                  uint32_t dest,

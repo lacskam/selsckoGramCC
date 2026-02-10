@@ -9,6 +9,7 @@ add_executable(selsckoGram main.cpp
     session/session.h session/session.cpp
     server/server.h server/server.cpp
     net/proto/proto.h net/proto/proto.cpp
+    logs.h
 
 )
 

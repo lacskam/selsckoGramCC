@@ -2,11 +2,12 @@
 #define SERVER_H
 
 #include <optional>
-#include <unordered_set>
+#include <unordered_map>
 #include "session.h"
 
 class server {
 public:
+    int id_count=0;
     server(boost::asio::io_context& io_context, std::uint16_t port) :
         io_context(io_context),
         acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {}
@@ -19,7 +20,7 @@ private:
     boost::asio::io_context& io_context;
     tcp::acceptor acceptor;
     std::optional<tcp::socket> socket;
-    std::unordered_set<std::shared_ptr<session>> clients;
+    std::unordered_map<int, std::shared_ptr<session>> clients;
 };
 
 #endif // SERVER_H
