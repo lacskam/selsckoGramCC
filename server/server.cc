@@ -1,9 +1,10 @@
 #include "server.h"
 #include <iostream>
+#include "db_proccessing.h"
 
 void server::async_accept() {
     socket.emplace(io_context);
-
+    db_conection db;
 
     acceptor.async_accept(*socket, [&](error_code error) {
         auto client = std::make_shared<session>(std::move(*socket));

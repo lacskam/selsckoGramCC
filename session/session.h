@@ -3,8 +3,8 @@
 
 #include <boost/asio.hpp>
 #include <queue>
-#include "../net/proto/proto.h"
-#include "../logs.h"
+#include "proto.h"
+#include "logs.h"
 
 using tcp = boost::asio::ip::tcp;
 using error_code = boost::system::error_code;

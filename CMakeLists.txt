@@ -5,12 +5,26 @@ project(selsckoGram LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(selsckoGram main.cpp
-    session/session.h session/session.cpp
-    server/server.h server/server.cpp
-    net/proto/proto.h net/proto/proto.cpp
-    logs.h
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PQXX REQUIRED libpqxx)
+
+add_executable(selsckoGram main.cc
+    session/session.h session/session.cc
+    server/server.h server/server.cc
+    net/proto/proto.h net/proto/proto.cc
+    logs.h server/data/db/db_proccessing.h
+    server/data/db/db_proccessing.cc
+    server/data/db/db_config.h
+
+
+)
+
+target_include_directories(selsckoGram PRIVATE ${PQXX_INCLUDE_DIRS})
+
+target_link_libraries(selsckoGram
+    PRIVATE
+    ${PQXX_LIBRARIES}
 )
 
 include(GNUInstallDirs)
@@ -21,4 +35,8 @@ install(TARGETS selsckoGram
 
 target_include_directories(selsckoGram PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/session
                                                 ${CMAKE_CURRENT_SOURCE_DIR}/server
-                                            ${CMAKE_CURRENT_SOURCE_DIR}/net/proto)
+                                            ${CMAKE_CURRENT_SOURCE_DIR}/net/proto
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/server/data/db
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/net/auth
+                                ${CMAKE_CURRENT_SOURCE_DIR}/net/encry
+                            ${CMAKE_CURRENT_SOURCE_DIR}/)
