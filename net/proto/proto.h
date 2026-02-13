@@ -5,7 +5,7 @@
 #include <vector>
 #include <cstring>
 #include<memory>
-
+//#include "logs.h"
 
 
 typedef struct {
@@ -35,16 +35,21 @@ typedef struct
 
 enum : uint8_t
 {
-    servmessage = 0x01,
-    usmessage = 0x02,
-    brcast = 0x03,
+    SERV_MESSAGE = 0x01,
+    USMESSAGE = 0x02,
+    BRCAST = 0x03,
 
 
 };
-std::shared_ptr<std::vector<uint8_t>> make_packet(uint8_t type,
+
+
+
+packet make_packet(uint8_t type,
                                  uint32_t source,
                                  uint32_t dest,
                                  std::string_view message);
 
+
+std::shared_ptr<std::vector<uint8_t>> serialise_packet(const packet *pkt);
 
 #endif // PROTO_H

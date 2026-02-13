@@ -11,9 +11,11 @@ void session::start(message_handler&& on_message, error_handler&& on_error) {
 void session::post(uint8_t type,uint32_t source,uint32_t dest,std::string_view message) {
     LOG_DEBUG_MSG("post - [session "+std::to_string(state.session_id())+"]");
     bool idle = outgoing.empty();
-    auto packet = make_packet(type,source,dest,message);
 
-    outgoing.push_back(packet);
+    packet pkt = make_packet(type,source,dest,message);
+    auto s_packet = serialise_packet(&pkt);
+
+    outgoing.push_back(s_packet);
 
     if (idle) {
         async_write();

@@ -8,9 +8,9 @@ void server::async_accept() {
 
     acceptor.async_accept(*socket, [&](error_code error) {
         auto client = std::make_shared<session>(std::move(*socket));
-        client->post(brcast,0,0,"welcome to chat\n\r");
+        client->post(BRCAST,0,0,"welcome to chat\n\r");
 
-        broadcast(brcast,0,0,"we have a newcomer\n\r");
+        broadcast(BRCAST,0,0,"we have a newcomer\n\r");
 
         LOG_INFO_MSG("new client - [server::async_accept]");
         client->_state().set_session_id(++id_count);
@@ -22,10 +22,10 @@ void server::async_accept() {
         client->start(
             [this](uint8_t type,uint32_t source,uint32_t dest,const std::string &message) {
                 switch (type) {
-                case brcast:
+                case BRCAST:
                     broadcast(type, source, dest, message);
                     break;
-                case usmessage:
+                case USMESSAGE:
                     post(type, source, dest, message);
                     break;
                 default:

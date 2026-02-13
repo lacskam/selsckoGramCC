@@ -16,6 +16,8 @@ add_executable(selsckoGram main.cc
     logs.h server/data/db/db_proccessing.h
     server/data/db/db_proccessing.cc
     server/data/db/db_config.h
+    net/encry/encry.h net/encry/encry.cpp
+    net/auth/auth_proccessing.h net/auth/auth_proccessing.cpp
 
 
 )

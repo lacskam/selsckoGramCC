@@ -31,10 +31,11 @@ public:
 
     void send(uint8_t type,uint32_t source,
                        uint32_t dest,std::string_view message) {
-        auto packet = make_packet(type, source, dest, message);
+        packet pkt = make_packet(type,source,dest,message);
+        auto s_packet = serialise_packet(&pkt);
 
         bool idle = outgoing.empty();
-        outgoing.push_back(packet);
+        outgoing.push_back(s_packet);
 
         if (idle) {
             async_write();
@@ -115,8 +116,8 @@ int main() {
                    
 
                     std::string result = line.substr(first + 1, second - (first + 1));
-                    client->send(usmessage,0,stoi(result),line.substr(second,line.size()));;
-                } else client->send(brcast,0,0,line);
+                    client->send(USMESSAGE,0,stoi(result),line.substr(second,line.size()));;
+                } else client->send(BRCAST,0,0,line);
                 
             }
         });
