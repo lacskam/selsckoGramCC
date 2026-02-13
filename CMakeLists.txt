@@ -8,6 +8,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PQXX REQUIRED libpqxx)
+find_package(OpenSSL REQUIRED)
+
+
+
+
+
 
 add_executable(selsckoGram main.cc
     session/session.h session/session.cc
@@ -28,7 +34,7 @@ target_link_libraries(selsckoGram
     PRIVATE
     ${PQXX_LIBRARIES}
 )
-
+target_link_libraries(selsckoGram PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 include(GNUInstallDirs)
 install(TARGETS selsckoGram
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -42,3 +48,4 @@ target_include_directories(selsckoGram PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sessi
                                     ${CMAKE_CURRENT_SOURCE_DIR}/net/auth
                                 ${CMAKE_CURRENT_SOURCE_DIR}/net/encry
                             ${CMAKE_CURRENT_SOURCE_DIR}/)
+add_subdirectory(selsck_test_client)

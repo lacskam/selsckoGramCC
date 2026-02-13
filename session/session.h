@@ -52,8 +52,7 @@ private:
 
     tcp::socket socket;
 
-    packet_header read_header{};
-    std::vector<uint8_t> read_payload;
+    packet temp_packet;
 
     std::deque<std::shared_ptr<std::vector<uint8_t>>> outgoing;
     message_handler on_message;

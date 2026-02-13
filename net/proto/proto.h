@@ -5,16 +5,16 @@
 #include <vector>
 #include <cstring>
 #include<memory>
-//#include "logs.h"
+#include "../encry/encry.h"
+#include "../../logs.h"
 
 
-typedef struct {
+struct packet_navigation_info {
 
     uint32_t source_id;
     uint32_t dest_id;
 
-
-} packet_navigation_info;
+};
 
 #pragma pack(push,1)
 
@@ -27,11 +27,20 @@ typedef struct {
 
 #pragma pack(pop)
 
-typedef struct
-{
+#pragma pack(push,1)
+struct packet  {
     packet_header header;
-    std::vector<uint8_t> payload;
-} packet;
+    uint8_t nonce[12];
+    uint8_t tag[16];
+    uint8_t payload[4096];
+
+    std::string get_payload();
+} ;
+#pragma pack(pop)
+
+
+const size_t nonce_s = 12;
+const size_t tag_s = 16;
 
 enum : uint8_t
 {
@@ -42,14 +51,15 @@ enum : uint8_t
 
 };
 
-
-
 packet make_packet(uint8_t type,
                                  uint32_t source,
                                  uint32_t dest,
                                  std::string_view message);
 
+bool encr_packet(packet *pkt);
 
 std::shared_ptr<std::vector<uint8_t>> serialise_packet(const packet *pkt);
+
+
 
 #endif // PROTO_H

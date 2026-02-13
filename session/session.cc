@@ -33,7 +33,7 @@ void session::async_read_header() {
     LOG_DEBUG_MSG("async_read_header - [session "+std::to_string(state.session_id())+"]");
     boost::asio::async_read(
         socket,
-        boost::asio::buffer(&read_header,sizeof(read_header)),
+        boost::asio::buffer(&temp_packet,sizeof(packet_header) + nonce_s + tag_s),
         [ self = shared_from_this() ](error_code ec, std::size_t n) {
             self->on_header_read(ec);
         });
@@ -47,19 +47,18 @@ void session::on_header_read(error_code ec) {
         on_error(ec);
         return;
     }
-    read_payload.resize(read_header.payload_size);
     async_read_payload();
 }
 
 void session::async_read_payload() {
-    if (read_payload.empty()) {
+    if (temp_packet.header.payload_size == 0) {
         async_read_header();
         return;
     }
     LOG_DEBUG_MSG("async_read_payload - [session "+std::to_string(state.session_id())+"]");
     boost::asio::async_read(
         socket,
-        boost::asio::buffer(read_payload.data(), read_payload.size()),
+        boost::asio::buffer(temp_packet.payload, temp_packet.header.payload_size),
         [self = shared_from_this()](error_code ec, std::size_t) {
             self->on_payload_read(ec);
         });
@@ -72,10 +71,12 @@ void session::on_payload_read(error_code ec) {
         return;
     }
 
-    std::string message(read_payload.begin(), read_payload.end());
+    std::string message(temp_packet.get_payload());
     LOG_DEBUG_MSG("async_read_payload - [session "+std::to_string(state.session_id())+"]");
-    std::cout<<read_header.navi_ids.source_id<<" " +message<<std::endl;
-    on_message(read_header.type,this->state.session_id(),read_header.navi_ids.dest_id,message);
+
+    std::cout<<temp_packet.header.navi_ids.source_id<<" " +message<<std::endl;
+
+    on_message(temp_packet.header.type,this->state.session_id(),temp_packet.header.navi_ids.dest_id,message);
 
     session::async_read();
 }

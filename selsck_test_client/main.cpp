@@ -1,4 +1,4 @@
-#define ASIO_STANDALONE
+
 #include <boost/asio.hpp>
 #include <iostream>
 #include <vector>
@@ -6,7 +6,7 @@
 #include <string>
 #include <deque>
 #include <cstring>
-#include "net/proto/proto.h"
+#include "../net/proto/proto.h"
 using boost::asio::ip::tcp;
 
 
@@ -30,11 +30,12 @@ public:
     }
 
     void send(uint8_t type,uint32_t source,
-                       uint32_t dest,std::string_view message) {
-        auto packet = make_packet(type, source, dest, message);
+              uint32_t dest,std::string_view message) {
+        packet pkt = make_packet(type,source,dest,message);
+        auto s_packet = serialise_packet(&pkt);
 
         bool idle = outgoing.empty();
-        outgoing.push_back(packet);
+        outgoing.push_back(s_packet);
 
         if (idle) {
             async_write();
@@ -44,14 +45,15 @@ public:
 private:
     tcp::socket socket;
     packet_header read_header;
+    packet temp_packet;
     std::vector<uint8_t> read_payload;
     std::deque<std::shared_ptr<std::vector<uint8_t>>> outgoing;
 
     void async_read_header() {
-        boost::asio::async_read(socket, boost::asio::buffer(&read_header, sizeof(read_header)),
+        boost::asio::async_read(socket, boost::asio::buffer(&temp_packet, sizeof(packet_header) + nonce_s + tag_s),
                                 [self = shared_from_this()](boost::system::error_code ec, std::size_t) {
                                     if (!ec) {
-                                        self->read_payload.resize(self->read_header.payload_size);
+                                        self->read_payload.resize(self->temp_packet.header.payload_size);
                                         self->async_read_payload();
                                     } else {
                                         std::cerr << "Header read error: " << ec.message() << "\n";
@@ -69,7 +71,7 @@ private:
                                 [self = shared_from_this()](boost::system::error_code ec, std::size_t) {
                                     if (!ec) {
                                         std::string msg(self->read_payload.begin(), self->read_payload.end());
-                                        std::cout << "User " << self->read_header.navi_ids.source_id <<": "<< msg << "\n";
+                                        std::cout << "User " << self->temp_packet.header.navi_ids.source_id <<": "<< msg << "\n";
                                         self->async_read_header();
                                     } else {
                                         std::cerr << "Payload read error: " << ec.message() << "\n";
@@ -108,16 +110,16 @@ int main() {
             std::string line;
             while (std::getline(std::cin, line)) {
                 if (line[0]==':') {
-                     auto first = line.find(":");
-                        
+                    auto first = line.find(":");
+
 
                     auto second = line.find(":", first + 1);
-                   
+
 
                     std::string result = line.substr(first + 1, second - (first + 1));
-                    client->send(usmessage,0,stoi(result),line.substr(second,line.size()));;
-                } else client->send(brcast,0,0,line);
-                
+                    client->send(USMESSAGE,0,stoi(result),line.substr(second,line.size()));;
+                } else client->send(BRCAST,0,0,line);
+
             }
         });
 
