@@ -68,9 +68,7 @@ bool encr_packet(packet *pkt, std::vector<uint8_t> key) {
 std::shared_ptr<std::vector<uint8_t>> serialise_packet(const packet *pkt) {
 
     constexpr const size_t header_s = sizeof(packet_header);
-    constexpr const size_t other_size = header_s + nonce_s + tag_s;
-
-    const size_t total_size = other_size + pkt->header.payload_size;
+    const size_t total_size = header_s + pkt->header.payload_size;
 
     auto buffer = std::make_shared<std::vector<uint8_t>>(total_size);
 
@@ -79,12 +77,6 @@ std::shared_ptr<std::vector<uint8_t>> serialise_packet(const packet *pkt) {
 
         std::memcpy(buffer->data() + offset, &pkt->header, header_s);
         offset += header_s;
-
-        std::memcpy(buffer->data() + offset, pkt->nonce, nonce_s);
-        offset += nonce_s;
-
-        std::memcpy(buffer->data() + offset, pkt->tag, tag_s);
-        offset += tag_s;
 
         std::memcpy(buffer->data() + offset, pkt->payload, pkt->header.payload_size);
 

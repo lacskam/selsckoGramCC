@@ -29,7 +29,7 @@ void server::async_accept() {
     db_conection db;
     auto s_socket = std::make_shared<ssl::stream<tcp::socket>>(io_context, ssl_ctx);
 
-    acceptor.async_accept(s_socket->lowest_layer(), [&](error_code error) {
+    acceptor.async_accept(s_socket->lowest_layer(), [&, s_socket](error_code error) {
         if (error) {
             LOG_ERROR_MSG(error.message()+" - [async_accept]");
             async_accept();
@@ -38,7 +38,7 @@ void server::async_accept() {
 
         s_socket->async_handshake(
             ssl::stream_base::server,
-            [&](error_code ec) {
+            [&,s_socket](error_code ec) {
 
                 if (!ec) {
                     LOG_DEBUG_MSG("TLS handshake success: "+std::string(SSL_get_cipher(s_socket->native_handle())));

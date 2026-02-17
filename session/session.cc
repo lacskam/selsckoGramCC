@@ -28,12 +28,23 @@ void session::start(message_handler&& on_message, error_handler&& on_error) {
     async_read();
 }
 
+void session::sock_close_handler(const boost::system::error_code& ec) {
+    socket->async_shutdown([self = shared_from_this()](const boost::system::error_code& ec){
+        self->socket->lowest_layer().close();
+    });
+    on_error(ec);
+}
+
 void session::post(uint8_t type,uint32_t source,uint32_t dest,std::string_view message) {
     LOG_DEBUG_MSG("post - [session "+std::to_string(state.session_id())+"]");
     bool idle = outgoing.empty();
 
-    packet pkt = make_packet(type,source,dest,message);
-    auto s_packet = serialise_packet(&pkt);
+    packet *pkt = new packet;
+    *pkt = make_packet(type,source,dest,message);
+
+    auto s_packet = serialise_packet(pkt);
+
+    delete pkt;
 
     outgoing.push_back(s_packet);
 
@@ -53,18 +64,12 @@ void session::async_read_header() {
     LOG_DEBUG_MSG("async_read_header - [session "+std::to_string(state.session_id())+"]");
     boost::asio::async_read(
         *socket,
-        boost::asio::buffer(&temp_packet,sizeof(packet_header) + nonce_s + tag_s),
+        boost::asio::buffer(&temp_packet,sizeof(packet_header)),
         [ self = shared_from_this() ](error_code ec, std::size_t n) {
             self->on_header_read(ec);
         });
 }
 
-void session::sock_close_handler(const boost::system::error_code& ec) {
-    socket->async_shutdown([self = shared_from_this()](const boost::system::error_code& ec){
-        self->socket->lowest_layer().close();
-    });
-    on_error(ec);
-}
 
 
 void session::on_header_read(error_code ec) {
