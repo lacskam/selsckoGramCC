@@ -34,20 +34,20 @@ struct packet  {
     uint8_t tag[16];
     uint8_t payload[4096];
 
-    std::string get_payload();
+    std::string_view get_payload() const;
 } ;
 #pragma pack(pop)
 
 
-const size_t nonce_s = 12;
-const size_t tag_s = 16;
+inline const size_t nonce_s = 12;
+inline const size_t tag_s = 16;
 
 enum : uint8_t
 {
     SERV_MESSAGE = 0x01,
     USMESSAGE = 0x02,
     BRCAST = 0x03,
-
+    HANDSHAKE = 0x04
 
 };
 
@@ -56,10 +56,11 @@ packet make_packet(uint8_t type,
                                  uint32_t dest,
                                  std::string_view message);
 
-bool encr_packet(packet *pkt);
+bool encr_packet(packet *pkt, std::vector<uint8_t> &key);
 
 std::shared_ptr<std::vector<uint8_t>> serialise_packet(const packet *pkt);
 
+inline const std::vector<uint8_t> generate_key() ;
 
 
 #endif // PROTO_H

@@ -2,11 +2,11 @@
 
 
 
-std::string packet::get_payload()  {
-    return std::string(
+std::string_view packet::get_payload() const   {
+    return {
         reinterpret_cast<const char*>(payload),
         header.payload_size
-        );
+    };
 }
 
 
@@ -20,39 +20,47 @@ packet make_packet(
 
     packet pkt;
 
-    packet_header header{
+    packet_header header {
         .navi_ids = { source, dest },
         .type = type,
         .payload_size = payload_size
     };
 
     pkt.header = header;
-    if (pkt.header.payload_size) {
+    if (pkt.header.payload_size) [[likely]] {
         std::memcpy(pkt.payload, message.data(), payload_size);
-    } else {
-        LOG_WARNING_MSG("payload is empty - [make_packet]");
+    } else [[unlikely]] {
+
     }
 
 
     return pkt;
 }
 
-std::vector<uint8_t> key_g(32);
 
-bool encr_packet(packet *pkt) {
 
-    uint8_t payload_cha[pkt->header.payload_size];
+const std::vector<uint8_t> generate_key() {
+    std::vector<uint8_t> session_key(32);
+    RAND_bytes(session_key.data(), 32);
+    return session_key;
 
-    RAND_bytes(key_g.data(), key_g.size());
+}
+
+bool encr_packet(packet *pkt, std::vector<uint8_t> key) {
+
+    auto payload_cha = std::make_unique<uint8_t[]>(pkt->header.payload_size);
+
+
+
     RAND_bytes(pkt->nonce, nonce_s);
 
-    if (!encrypt_packet(pkt->payload,pkt->header.payload_size, key_g, pkt->nonce, payload_cha, pkt->tag))
+    if (!encrypt_packet(pkt->payload,pkt->header.payload_size, key, pkt->nonce, payload_cha.get(), pkt->tag)) [[unlikely]]
     {
         LOG_ERROR_MSG("Encrypt error - [encr_packet]");
         return 1;
     }
 
-    std::memcpy(pkt->payload, payload_cha, pkt->header.payload_size);
+    std::memcpy(pkt->payload, payload_cha.get(), pkt->header.payload_size);
 
     return 0;
 }
@@ -66,7 +74,7 @@ std::shared_ptr<std::vector<uint8_t>> serialise_packet(const packet *pkt) {
 
     auto buffer = std::make_shared<std::vector<uint8_t>>(total_size);
 
-    if (pkt->header.payload_size) {
+    if (pkt->header.payload_size) [[likely]] {
         size_t offset = 0;
 
         std::memcpy(buffer->data() + offset, &pkt->header, header_s);
@@ -80,7 +88,7 @@ std::shared_ptr<std::vector<uint8_t>> serialise_packet(const packet *pkt) {
 
         std::memcpy(buffer->data() + offset, pkt->payload, pkt->header.payload_size);
 
-    } else {
+    } else [[unlikely]] {
         LOG_WARNING_MSG("payload is empty - [serialise_packet]");
     }
 

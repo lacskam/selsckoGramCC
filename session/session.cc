@@ -1,5 +1,25 @@
 #include "session.h"
 
+// session::~session() {
+//     if (local_key)
+//         EVP_PKEY_free(local_key);
+// }
+
+// bool session::session_pubkey_post() {
+//     uint8_t key_pub[32];
+//     local_key = generate_x25519_key();
+//     generate_pub_key(key_pub,local_key);
+//     post(HANDSHAKE,0,0,std::string((char*)key_pub,32));
+//     LOG_DEBUG_MSG("session_handshake - [session "+std::to_string(state.session_id())+"]");
+//     return 0;
+// }
+
+// bool session::client_pubkey_read(uint8_t* key_pub) {
+//     session_key = procces_pub_key(key_pub,local_key);
+
+//     return 0;
+// }
+
 
 void session::start(message_handler&& on_message, error_handler&& on_error) {
     this->on_message = std::move(on_message);
@@ -32,19 +52,26 @@ void session::async_read() {
 void session::async_read_header() {
     LOG_DEBUG_MSG("async_read_header - [session "+std::to_string(state.session_id())+"]");
     boost::asio::async_read(
-        socket,
+        *socket,
         boost::asio::buffer(&temp_packet,sizeof(packet_header) + nonce_s + tag_s),
         [ self = shared_from_this() ](error_code ec, std::size_t n) {
             self->on_header_read(ec);
         });
 }
 
+void session::sock_close_handler(const boost::system::error_code& ec) {
+    socket->async_shutdown([self = shared_from_this()](const boost::system::error_code& ec){
+        self->socket->lowest_layer().close();
+    });
+    on_error(ec);
+}
+
+
 void session::on_header_read(error_code ec) {
     LOG_DEBUG_MSG("on_header_read - [session "+std::to_string(state.session_id())+"]");
-    if (ec) {
+    if (ec) [[unlikely]] {
         LOG_ERROR_MSG("on_header_read - [session "+std::to_string(state.session_id())+"]");
-        socket.close(ec);
-        on_error(ec);
+        sock_close_handler(ec);
         return;
     }
     async_read_payload();
@@ -57,7 +84,7 @@ void session::async_read_payload() {
     }
     LOG_DEBUG_MSG("async_read_payload - [session "+std::to_string(state.session_id())+"]");
     boost::asio::async_read(
-        socket,
+        *socket,
         boost::asio::buffer(temp_packet.payload, temp_packet.header.payload_size),
         [self = shared_from_this()](error_code ec, std::size_t) {
             self->on_payload_read(ec);
@@ -65,9 +92,8 @@ void session::async_read_payload() {
 }
 
 void session::on_payload_read(error_code ec) {
-    if (ec) {
-        socket.close(ec);
-        on_error(ec);
+    if (ec) [[unlikely]] {
+        sock_close_handler(ec);
         return;
     }
 
@@ -88,7 +114,7 @@ void session::async_write() {
     auto& packet = outgoing.front();
 
     boost::asio::async_write(
-        socket,
+        *socket,
         boost::asio::buffer(*packet),
         [self = shared_from_this()](error_code ec, std::size_t bytes_transferred) {
             self->on_write(ec, bytes_transferred);
@@ -102,9 +128,8 @@ void session::on_write(error_code ec, std::size_t bytes_transferred) {
         if (!outgoing.empty()) {
             async_write();
         }
-    } else {
-        socket.close(ec);
-        on_error(ec);
+    } else [[unlikely]] {
+        sock_close_handler(ec);
     }
 }
 

@@ -11,9 +11,11 @@ pkg_check_modules(PQXX REQUIRED libpqxx)
 find_package(OpenSSL REQUIRED)
 
 
+set(CERT_DIR ${CMAKE_SOURCE_DIR}/tls_s)
 
 
-
+file(COPY ${CERT_DIR}/serv.crt DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CERT_DIR}/serv.key DESTINATION ${CMAKE_BINARY_DIR})
 
 add_executable(selsckoGram main.cc
     session/session.h session/session.cc
@@ -24,8 +26,6 @@ add_executable(selsckoGram main.cc
     server/data/db/db_config.h
     net/encry/encry.h net/encry/encry.cpp
     net/auth/auth_proccessing.h net/auth/auth_proccessing.cpp
-
-
 )
 
 target_include_directories(selsckoGram PRIVATE ${PQXX_INCLUDE_DIRS})
@@ -47,5 +47,7 @@ target_include_directories(selsckoGram PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sessi
                                         ${CMAKE_CURRENT_SOURCE_DIR}/server/data/db
                                     ${CMAKE_CURRENT_SOURCE_DIR}/net/auth
                                 ${CMAKE_CURRENT_SOURCE_DIR}/net/encry
-                            ${CMAKE_CURRENT_SOURCE_DIR}/)
+                            ${CMAKE_CURRENT_SOURCE_DIR}/
+                        )
+
 add_subdirectory(selsck_test_client)

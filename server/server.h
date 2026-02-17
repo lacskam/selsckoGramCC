@@ -1,7 +1,6 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <optional>
 #include <unordered_map>
 #include "session.h"
 
@@ -10,7 +9,9 @@ public:
     int id_count=0;
     server(boost::asio::io_context& io_context, std::uint16_t port) :
         io_context(io_context),
-        acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {}
+        ssl_ctx(boost::asio::ssl::context::tlsv13_server),
+        acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {configure_ssl();}
+
 
     void async_accept();
 
@@ -18,9 +19,12 @@ public:
     void broadcast(uint8_t type,uint32_t source,uint32_t dest,const std::string& message);
 
 private:
+    void configure_ssl();
+
     boost::asio::io_context& io_context;
+
+    ssl::context ssl_ctx;
     tcp::acceptor acceptor;
-    std::optional<tcp::socket> socket;
     std::unordered_map<int, std::shared_ptr<session>> clients;
 };
 

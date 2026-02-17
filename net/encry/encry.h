@@ -8,6 +8,12 @@
 #include <cstring>
 
 
+EVP_PKEY* generate_x25519_key();
+
+void generate_pub_key(uint8_t *key_pub,EVP_PKEY* local_key);
+
+std::vector<uint8_t> procces_pub_key(uint8_t *key_pub,EVP_PKEY* local_key);
+std::vector<uint8_t> derive_shared_secret(EVP_PKEY* priv, EVP_PKEY* peer_pub);
 
 
 bool encrypt_packet(
